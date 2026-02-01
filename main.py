@@ -2,6 +2,7 @@ import os
 from fastapi import FastAPI, Query
 import requests
 from dotenv import load_dotenv
+from signals import extract_signal
 
 load_dotenv()
 
@@ -49,8 +50,8 @@ def crypto_news(limit: int = 10):
         return {"error": "Missing CryptoPanic API key"}
 
     params = {
-    "auth_token": CRYPTOPANIC_KEY,
-    "public": "true"
+        "auth_token": CRYPTOPANIC_KEY,
+        "public": "true"
     }
 
     r = requests.get(
@@ -72,9 +73,49 @@ def crypto_news(limit: int = 10):
         {
             "title": item.get("title"),
             "url": item.get("url"),
-            "kind": item.get("kind"),
+            "kind": item.get("kind") or "CryptoPanic.com",
             "published_at": item.get("published_at"),
             "created_at": item.get("created_at")
         }
         for item in data.get("results", [])
     ]
+
+# Endpoint to analyze news signals
+# GET /news-signals
+@app.get("/news-signals")
+def news_signals():
+
+    params = {
+        "auth_token": CRYPTOPANIC_KEY,
+        "public": "true"
+    }
+
+    try:
+        r = requests.get(CRYPTOPANIC_BASE, params=params, timeout=10)
+        r.raise_for_status()
+    except requests.RequestException as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    if "application/json" not in r.headers.get("content-type", ""):
+        raise HTTPException(
+            status_code=502,
+            detail="CryptoPanic returned non-JSON response"
+        )
+
+    data = r.json()
+    results = []
+
+    for item in data.get("results", []):
+        title = item.get("title", "")
+        desc = item.get("description", "")
+
+        signal = extract_signal(title, desc)
+
+        results.append({
+            "title": title,
+            "source": item.get("source", {}).get("title"),
+            "sentiment": signal["sentiment"],
+            "impact_score": signal["impact_score"]
+        })
+
+    return results

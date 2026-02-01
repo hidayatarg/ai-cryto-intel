@@ -1,6 +1,6 @@
 # AI Crypto Intels
-
-### Plans
+A project to build an AI-powered cryptocurrency intelligence platform using FastAPI.
+## Data Collection
 ### 1. Install Dependencies
 - Python
 - FastAPI
@@ -16,4 +16,7 @@ Pull real-time crypto news, normalize it, and expose it via API.
 
 Require API Key from CryptoPanic.com
 
+## Thinking Layer
 ### 4. Implementing First LLM Call
+In this step we do the Signal Extraction, we will use a simple keyword matching approach to classify news headlines as bullish or bearish.
+We convert news to signals.
