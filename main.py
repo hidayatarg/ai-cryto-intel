@@ -1,8 +1,14 @@
+import os
 from fastapi import FastAPI, Query
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(title="AI Crypto Market Intelligence")
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
+CRYPTOPANIC_BASE = "https://cryptopanic.com/api/developer/v2/posts/"
+CRYPTOPANIC_KEY = os.getenv("CRYPTOPANIC_API_KEY")
 
 @app.get("/health")
 def health():
@@ -28,11 +34,47 @@ def price_summary(coin: str = Query(..., example="solana")):
 
     coin_data = data[0]
 
-    print (coin_data)
-
     return {
         "coin": coin_data["id"],
         "price_usd": coin_data["current_price"],
         "change_24h_percent": coin_data["price_change_percentage_24h"],
         "market_cap": coin_data["market_cap"]
     }
+
+# Endpoint to get latest news articles about cryptocurrencies
+# GET /news
+@app.get("/news")
+def crypto_news(limit: int = 10):
+    if not CRYPTOPANIC_KEY:
+        return {"error": "Missing CryptoPanic API key"}
+
+    params = {
+    "auth_token": CRYPTOPANIC_KEY,
+    "public": "true"
+    }
+
+    r = requests.get(
+        CRYPTOPANIC_BASE,
+        params=params,
+        headers={"Accept": "application/json"}
+    )
+
+    if r.status_code != 200:
+        return {
+            "error": "CryptoPanic API error",
+            "status_code": r.status_code,
+            "response": r.text[:300]
+        }
+
+    data = r.json()
+
+    return [
+        {
+            "title": item.get("title"),
+            "url": item.get("url"),
+            "kind": item.get("kind"),
+            "published_at": item.get("published_at"),
+            "created_at": item.get("created_at")
+        }
+        for item in data.get("results", [])
+    ]
