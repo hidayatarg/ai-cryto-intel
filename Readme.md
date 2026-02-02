@@ -20,3 +20,5 @@ Require API Key from CryptoPanic.com
 ### 4. Implementing First LLM Call
 In this step we do the Signal Extraction, we will use a simple keyword matching approach to classify news headlines as bullish or bearish.
 We convert news to signals.
+
+### 5. Improve Signal Quality

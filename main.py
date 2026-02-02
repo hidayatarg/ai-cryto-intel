@@ -107,15 +107,19 @@ def news_signals():
 
     for item in data.get("results", []):
         title = item.get("title", "")
-        desc = item.get("description", "")
 
-        signal = extract_signal(title, desc)
+        signal = extract_signal(title)
+
+        # 🔇 Noise filter (Day-5 signal threshold)
+        if signal["impact_score"] < 0.2:
+            continue
 
         results.append({
             "title": title,
-            "source": item.get("source", {}).get("title"),
             "sentiment": signal["sentiment"],
-            "impact_score": signal["impact_score"]
+            "impact_score": signal["impact_score"],
+            "coins": signal["coins"],
         })
 
+    results = sorted(results, key=lambda x: x["impact_score"], reverse=True)
     return results

@@ -1,3 +1,6 @@
+from coins import detect_coins
+from sentiment import analyze_sentiment
+
 # Sentiment & Impact keywords
 BULLISH_KEYWORDS = {
     "bullish", "surge", "rally", "breakout", "adoption",
@@ -27,28 +30,14 @@ def normalize(text: str) -> str:
     return text.lower().strip()
 
 # Sentiment scoring engine
-def extract_signal(title: str, description: str):
-    text = normalize(f"{title} {description}")
+def extract_signal(title: str) -> dict:
+    sentiment, impact = analyze_sentiment(title)
 
-    bullish_hits = sum(1 for k in BULLISH_KEYWORDS if k in text)
-    bearish_hits = sum(1 for k in BEARISH_KEYWORDS if k in text)
-    impact_hits = sum(1 for k in HIGH_IMPACT_KEYWORDS if k in text)
-
-    if bullish_hits > bearish_hits:
-        sentiment = "bullish"
-    elif bearish_hits > bullish_hits:
-        sentiment = "bearish"
-    else:
-        sentiment = "neutral"
-
-    impact_score = min(
-        1.0,
-        impact_hits * 0.4 + abs(bullish_hits - bearish_hits) * 0.2
-    )
+    coins = detect_coins(title)
 
     return {
         "sentiment": sentiment,
-        "impact_score": round(impact_score, 2),
-        "bullish_hits": bullish_hits,
-        "bearish_hits": bearish_hits
+        "impact_score": impact,
+        "coins": coins,
+        "is_relevant": bool(coins),
     }
