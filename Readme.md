@@ -1,5 +1,15 @@
 # AI Crypto Intels
 A project to build an AI-powered cryptocurrency intelligence platform using FastAPI.
+
+### Endpoints:
+| Endpoints |  Description  | Response |
+|:-----|:--------:|------:|
+| /health   | Checking Health | `resp` |
+| /price-summary?coin=solana   | Get Price Summary for specific coin  |   `resp`  |
+| /news  | Get latest cryptocurrencies related news |    - |
+| /news-signals  | Get filtered inteligence with sentiment & impact |    - |
+| /news-signals  | Get get aggregated trade bias from news signals (actionable decision) |    - |
+
 ## Data Collection
 ### 1. Install Dependencies
 - Python
