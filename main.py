@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, Query
 import requests
 from dotenv import load_dotenv
-from signals import extract_signal
+from services.signals import extract_signal
 
 load_dotenv()
 

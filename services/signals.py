@@ -1,5 +1,5 @@
-from coins import detect_coins
-from sentiment import analyze_sentiment
+from models.coins import detect_coins
+from services.sentiment import analyze_sentiment
 
 # Sentiment & Impact keywords
 BULLISH_KEYWORDS = {
