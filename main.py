@@ -3,6 +3,7 @@ from fastapi import FastAPI, Query
 import requests
 from dotenv import load_dotenv
 from services.signals import extract_signal
+from services.aggregator import aggregate_signals
 
 load_dotenv()
 
@@ -43,11 +44,11 @@ def price_summary(coin: str = Query(..., example="solana")):
     }
 
 # Endpoint to get latest news articles about cryptocurrencies
-# GET /news
+# GET /news ==> return raw news data
 @app.get("/news")
 def crypto_news(limit: int = 10):
     if not CRYPTOPANIC_KEY:
-        return {"error": "Missing CryptoPanic API key"}
+        raise HTTPException(status_code=500, detail="Missing CryptoPanic API key")
 
     params = {
         "auth_token": CRYPTOPANIC_KEY,
@@ -81,26 +82,19 @@ def crypto_news(limit: int = 10):
     ]
 
 # Endpoint to analyze news signals
-# GET /news-signals
+# GET /news-signals ===> return filtered inteligence with sentiment & impact
 @app.get("/news-signals")
 def news_signals():
+    if not CRYPTOPANIC_KEY:
+        raise HTTPException(status_code=500, detail="Missing CryptoPanic API key")
 
     params = {
         "auth_token": CRYPTOPANIC_KEY,
         "public": "true"
     }
 
-    try:
-        r = requests.get(CRYPTOPANIC_BASE, params=params, timeout=10)
-        r.raise_for_status()
-    except requests.RequestException as e:
-        raise HTTPException(status_code=502, detail=str(e))
-
-    if "application/json" not in r.headers.get("content-type", ""):
-        raise HTTPException(
-            status_code=502,
-            detail="CryptoPanic returned non-JSON response"
-        )
+    r = requests.get(CRYPTOPANIC_BASE, params=params, timeout=10)
+    r.raise_for_status()
 
     data = r.json()
     results = []
@@ -110,7 +104,7 @@ def news_signals():
 
         signal = extract_signal(title)
 
-        # 🔇 Noise filter (Day-5 signal threshold)
+        # Noise filter
         if signal["impact_score"] < 0.2:
             continue
 
@@ -123,3 +117,38 @@ def news_signals():
 
     results = sorted(results, key=lambda x: x["impact_score"], reverse=True)
     return results
+
+# Endpoint to get aggregated trade bias from news signals
+# GET /trade-signals ===> return actionable decision
+@app.get("/trade-signals")
+def trade_signals():
+    if not CRYPTOPANIC_KEY:
+        raise HTTPException(status_code=500, detail="Missing CryptoPanic API key")
+    
+    params = {
+        "auth_token": CRYPTOPANIC_KEY,
+        "public": "true"
+    }
+
+    r = requests.get(CRYPTOPANIC_BASE, params=params, timeout=10)
+    r.raise_for_status()
+
+    data = r.json()
+    signals = []
+
+    for item in data.get("results", []):
+        title = item.get("title", "")
+
+        signal = extract_signal(title)
+
+        # Noise filter
+        if signal["impact_score"] < 0.2:
+            continue
+
+        # Relevance filter
+        if not signal["coins"]:
+            continue
+
+        signals.append(signal)
+
+    return aggregate_signals(signals)

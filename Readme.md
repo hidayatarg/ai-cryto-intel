@@ -22,3 +22,11 @@ In this step we do the Signal Extraction, we will use a simple keyword matching 
 We convert news to signals.
 
 ### 5. Improve Signal Quality
+We improve the signal quality, added a sentiment score.
+
+### 6. Signal Aggregation & Trade Bias Engine
+Aggregate signals over time to generate trade bias (buy/sell/hold).
+For each coin:
+- Count bullish vs bearish signals
+- Weight by impact score
+- Decide a trade bias
