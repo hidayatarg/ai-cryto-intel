@@ -17,6 +17,18 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/math/add")
+def add(a: float = Query(..., description="First number"), b: float = Query(..., description="Second number")):
+    """Add two numbers together"""
+    result = a + b
+    return {
+        "operation": "addition",
+        "a": a,
+        "b": b,
+        "result": result
+    }
+
+
 # Endpoint to get price summary of a cryptocurrency
 # GET /price-summary?coin=solana
 @app.get("/price-summary")
